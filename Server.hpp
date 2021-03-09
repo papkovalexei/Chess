@@ -22,6 +22,8 @@
 #include <iostream>
 #include <mutex>
 
+#include "Client.hpp"
+
 class Server
 {
 public:
@@ -85,9 +87,10 @@ public:
 
             for (auto it = _clients.begin(); it != _clients.end(); it = _clients.begin())
             {
-                std::cout << "Close client socket (" << *it << ")" << std::endl;
-                shutdown(*it, 2);
-                close(*it);
+                std::cout << "Close client socket (" << it->getSocket() << ")" << std::endl;
+                shutdown(it->getSocket(), 2);
+                close(it->getSocket());
+                it->join();
                 _clients.erase(it);
             }
             std::cout << "Server down" << std::endl;
@@ -129,10 +132,10 @@ private:
                 continue;
 
             enable_keepalive(sock);
-            std::cout << "Accept: " << inet_ntoa(cs_addr.sin_addr) << std::endl;
+            std::cout << "Accept: " << inet_ntoa(cs_addr.sin_addr) << "(" << sock << ")" << std::endl;
 
             _mutex_clients.lock();
-            _clients.push_back(sock);
+            _clients.push_back(ClientServer(sock));
             _mutex_clients.unlock();
         }
     }
@@ -143,7 +146,7 @@ private:
     std::thread _handle_connection;
     std::recursive_mutex _mutex_clients;
 
-    std::vector<int> _clients;
+    std::vector<ClientServer> _clients;
 };
 
 #endif
