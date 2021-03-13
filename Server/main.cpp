@@ -4,7 +4,7 @@ void func()
 {
     Server::getInstance()->init(1900, "192.168.0.206");
     Server::getInstance()->start();
-    std::this_thread::sleep_for(std::chrono::seconds(40));
+    std::this_thread::sleep_for(std::chrono::seconds(500));
     Server::getInstance()->stop();
 }
 

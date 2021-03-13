@@ -10,7 +10,10 @@
 				"${file}",
 				"-o",
 				"${fileDirname}/${fileBasenameNoExtension}",
-				"-lpthread"
+				"-lpthread",
+				"-lsfml-graphics",
+				"-lsfml-window",
+				"-lsfml-system"
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"

@@ -36,6 +36,18 @@ public:
         send(_socket, msg.c_str(), sizeof(msg.c_str()), 0);
     }
 
+    std::string getMSG()
+    {
+        char buffer[1024];
+        int result = 1;
+        
+        result = recv(_socket, buffer, sizeof(buffer), 0);
+        
+        if (result <= 0)
+            _state = BAD;
+        return buffer;
+    }
+
     void connectServ(int port, const std::string& address)
     {
         _socket = socket(AF_INET, SOCK_STREAM, 0);
