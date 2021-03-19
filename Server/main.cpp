@@ -1,21 +1,36 @@
-#include "Server.hpp"
+#include <fstream>
 
-void func()
-{
-    Server::getInstance()->init(1900, "192.168.0.206");
-    Server::getInstance()->start();
-    std::this_thread::sleep_for(std::chrono::seconds(500));
-    Server::getInstance()->stop();
-}
+#include "Server.hpp"
 
 int main(int argc, char const *argv[])
 {
-    std::thread ser(func);
+    std::ifstream configuration("conf");
 
-    int stop;
-    std::cin >> stop;
+    std::string address;
+    int port;
 
-    ser.join();
+    configuration >> address >> port;
+
+    Server::getInstance()->init(address, port);
+    Server::getInstance()->start();
+
+    std::string command = "";
+
+    while (command != "exit")
+    {
+        std::getline(std::cin, command);
+
+        if (command == "show_user")
+        {
+            Server::getInstance()->show_user();
+        }
+        else if (command == "show_game")
+        {
+            Server::getInstance()->show_game();
+        }
+    }
+
+    Server::getInstance()->stop();
 
     return 0;
 }

@@ -1,56 +1,65 @@
 #ifndef H_GAME
 #define H_GAME
 
-#include <iostream>
-#include <vector>
 #include <map>
+#include <iostream>
 
 class Game
 {
 public:
-    Game() {}
+    Game() 
+        : _uid(0)
+    {}
 
     Game(Game&) = delete;
     void operator=(const Game&) = delete;
 
     static Game* getInstance();
 
-    void createGame(int first, int second)
+    int createGame(int socket_player)
     {
-        _session[_uid++] = std::pair<int, int>(first, second);
+        _uid++;
+
+        _sessions[_uid].first = socket_player;
+        _sessions[_uid].second = -1;
+
+        return _uid;
     }
 
-    std::pair<int, int> getPlayers(int key)
+    void joinGame(int key, int player)
     {
-        return _session[key];
+        _sessions[key].second = player;
     }
 
-    bool joinGame(int key, int second)
+    const std::pair<int, int> getGame(int key)
     {
-        if (_session.count(key) == 0)
-            return false;
-        _session[key].second = second;
-        return true;
+        return _sessions[key];
     }
 
-    std::map<int, std::pair<int, int>> getGame()
+    void deleteGame(int key)
     {
-        return _session;
+        _sessions.erase(key);
+    }
+
+    const std::map<int, std::pair<int, int>> getAllGames() const
+    {
+        return _sessions;
     }
 private:
-    int _uid = 0;
-    std::map<int, std::pair<int, int>> _session;
     static Game* _game;
+
+
+    std::map<int, std::pair<int, int>> _sessions;
+    int _uid;
 };
 
 Game* Game::_game = nullptr;
 
-Game *Game::getInstance()
+Game* Game::getInstance()
 {
     if (_game == nullptr)
         _game = new Game();
-
     return _game;
 }
 
-#endif
+#endif 
