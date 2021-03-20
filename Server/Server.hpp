@@ -375,6 +375,19 @@ private:
             }
         }
 
+        /**
+         * @brief 
+         * 
+         */
+        void _endGame()
+        {
+            _mutex_game.lock();
+            std::cout << "Delete: " << _game_uid << std::endl;
+            if (_game_uid != -1)
+                Game::getInstance()->deleteGame(_game_uid);
+            _mutex_game.unlock();
+            _game_uid = -1;
+        }
 
         /**
          * @brief Processes messages from the client (in _handlge_message thread)
@@ -404,6 +417,8 @@ private:
                     _join(std::atoi(msg.substr(4, msg.length() - 4).c_str()));
                 else if (std::regex_match(msg, std::regex("mv [0-9]* [0-9]*")))
                     _move(msg);
+                else if (msg == "end")
+                    _endGame();
 
                 std::cout << _socket << ": " << buffer << std::endl;
             } while (result > 0);
@@ -415,7 +430,7 @@ private:
 
         std::thread _handle_message;
         SOCK _socket;
-
+        std::recursive_mutex _mutex_game;
         int _game_uid;
     };
 

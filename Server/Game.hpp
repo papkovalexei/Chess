@@ -61,7 +61,8 @@ public:
      */
     void deleteGame(int key)
     {
-        _sessions.erase(key);
+        if (_sessions.count(key) > 0)
+            _sessions.erase(key);
     }
 
     /**
