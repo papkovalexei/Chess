@@ -22,11 +22,11 @@ int main(int argc, char const *argv[])
 
         if (command == "show_user")
         {
-            Server::getInstance()->show_user();
+            Server::getInstance()->showUser();
         }
         else if (command == "show_game")
         {
-            Server::getInstance()->show_game();
+            Server::getInstance()->showGame();
         }
     }
 

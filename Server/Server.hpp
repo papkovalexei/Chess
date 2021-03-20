@@ -70,7 +70,7 @@ public:
      * @brief Outputs all users that are currently connected to the output stream
      * 
      */
-    void show_user()
+    void showUser()
     {
         for (auto& client : _clients)
             std::cout << "Socket: " << client.first << std::endl;
@@ -80,7 +80,7 @@ public:
      * @brief Displays games that are currently active
      * 
      */
-    void show_game()
+    void showGame()
     {
         auto games = Game::getInstance()->getAllGames();
 
@@ -122,7 +122,7 @@ public:
         listen(_socket, 1);
         _state = WORK;
 
-        _handle_accept = std::thread([this]{_listen_accept();});
+        _handle_accept = std::thread([this]{_listenAccept();});
 
         return _state;
     }
@@ -194,7 +194,7 @@ private:
      * 
      * @param sock 
      */
-    void enable_keepalive(SOCK socket)
+    void enableKeepalive(SOCK socket)
     {
         int yes = 1;
         setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int));
@@ -212,7 +212,7 @@ private:
      * @brief Listens to the server socket and processes new connections. Adds them to map _clients
      * 
      */
-    void _listen_accept()
+    void _listenAccept()
     {
         while (_state == WORK)
         {
@@ -223,7 +223,7 @@ private:
             if (sock <= 0)
                 continue;
 
-            enable_keepalive(sock);
+            enableKeepalive(sock);
             std::cout << "Accept: " << inet_ntoa(cs_addr.sin_addr) << "(" << sock << ")" << std::endl;
 
             _mutex_clients.lock();
@@ -235,12 +235,21 @@ private:
     class Client
     {
     public:
+        /**
+         * @brief Construct a new Client object. constructs a class and starts a message processing thread
+         * 
+         * @param socket client
+         */
         Client(SOCK socket)
             : _socket(socket), _game_uid(-1)
         {
             _handle_message = std::thread([this]{_listen();});
         }
 
+        /**
+         * @brief Destroy the Client object. Closes the client socket and waits for the message processing flow to stop
+         * 
+         */
         ~Client()
         {
             std::cout << "Close: " << _socket << std::endl;
@@ -250,12 +259,20 @@ private:
             join();
         }
 
+        /**
+         * @brief bridge for _handle_message thread
+         * 
+         */
         void join()
         {
             if (_handle_message.joinable())
                 _handle_message.join();
         }
 
+        /**
+         * @brief sends a message to the client about the auto win
+         * 
+         */
         void autoWin()
         {
             _game_uid = -1;
@@ -264,6 +281,10 @@ private:
             send(_socket, buf, sizeof(buf), 0);
         }
     private:
+        /**
+         * @brief Sends all active games IDs to the client
+         * 
+         */
         void _show()
         {
             auto session = Game::getInstance()->getAllGames();
@@ -279,23 +300,61 @@ private:
             send(_socket, msg.c_str(), sizeof(msg.c_str()), 0);
         }
 
+        /**
+         * @brief Creates a new active game where the client will wait for the opponent
+         * 
+         */
         void _create()
         {
             _game_uid = Game::getInstance()->createGame(_socket);
         }
 
+        /**
+         * @brief connects the client to the active game and informs the opponent about it.
+         * And determines the colors of the players
+         * 
+         * @param game_uid active game
+         */
         void _join(int game_uid)
         {
             Game::getInstance()->joinGame(game_uid, _socket);
             _game_uid = game_uid;
+
+            std::string msg = "s";
+            int color = rand() % 2;
+
+            msg += std::to_string(color);
+            send(Game::getInstance()->getGame(game_uid).first, msg.c_str(), sizeof(msg.c_str()), 0);
+
+            msg = "s";
+            msg += std::to_string(1 - color);
+            send(_socket, msg.c_str(), sizeof(msg.c_str()), 0);
         }
 
-        void _exit_lobby()
+        /**
+         * @brief Sends the opponent information about the client's new move
+         * 
+         * @param mv - for ex mv 2 4
+         */
+        void _move(const std::string& mv)
         {
-            _game_uid = -1;
+            auto game = Game::getInstance()->getGame(_game_uid);
+
+            int enemy = -1;
+
+            if (game.first != _socket && game.first != -1)
+                enemy = game.first;
+            if (game.second != _socket && game.second != -1)
+                enemy = game.second;
+            send(enemy, mv.c_str(), sizeof(mv.c_str()), 0);
         }
 
-        void _clear_game()
+
+        /**
+         * @brief Deletes the active game due to disconnection, informs the opponent about it (if he was) call autoWin
+         * 
+         */
+        void _clearGame()
         {
             std::cout << "clear game " << _game_uid << std::endl;
             if (_game_uid != -1)
@@ -316,13 +375,18 @@ private:
             }
         }
 
+
+        /**
+         * @brief Processes messages from the client (in _handlge_message thread)
+         * 
+         */
         void _listen()
         {
             int result = 1;
 
             do
             {
-                char buffer[1042];
+                char buffer[256];
 
                 result = recv(_socket, buffer, sizeof(buffer), 0);
                 std::string msg = std::string(buffer);
@@ -334,14 +398,16 @@ private:
                     _show();
                 else if (msg == "create" && _game_uid == -1)
                     _create();
-                else if (msg == "exit_lobby")
-                    _exit_lobby();
+                else if (msg == "exit_lob")
+                    _clearGame();
                 else if (std::regex_match(msg, std::regex("join [0-9]*")))
                     _join(std::atoi(msg.substr(4, msg.length() - 4).c_str()));
+                else if (std::regex_match(msg, std::regex("mv [0-9]* [0-9]*")))
+                    _move(msg);
 
                 std::cout << _socket << ": " << buffer << std::endl;
             } while (result > 0);
-            _clear_game();
+            _clearGame();
 
             std::thread del_th = std::thread([this]{Server::getInstance()->deleteClient(_socket);});
             del_th.detach();
