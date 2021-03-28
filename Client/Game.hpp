@@ -23,6 +23,11 @@ public:
         start();
     }
 
+    /**
+     * @brief starts a thread listening to the server
+     * listens for client input
+     * 
+     */
     void start()
     {
         _handle_receive = std::thread([this]{_listen();});
@@ -60,6 +65,10 @@ public:
                   << "join <id> - connect to the game with an id" << std::endl;
     }
 
+    /**
+     * @brief stops the game, disconnects from the server
+     * 
+     */
     void stop()
     {
         _game.setActive(false);
@@ -71,6 +80,10 @@ public:
             _game_thread.join();
     }
 private:
+    /**
+     * @brief functional class, for the game
+     * 
+     */
     class GameClient 
     {
     public:
@@ -82,18 +95,33 @@ private:
         {
             _active = active;
         }
-
+        
+        /**
+         * @brief opponent's move
+         * 
+         * @param i 
+         * @param j 
+         */
         void move(int i, int j)
         {
             rendzy.move(i, j);
             _check_win = true;
         }
 
+        /**
+         * @brief Makes a win if the opponent is disconnected
+         * 
+         */
         void autoWin()
         {
             _active = false;
         }
 
+        /**
+         * @brief starts the game
+         * 
+         * @param color - my color
+         */
         void operator()(int color)
         {
             _active = true;
@@ -150,6 +178,10 @@ private:
                                 msg_move += " ";
                                 msg_move += std::to_string(mv.second);
 
+                                /**
+                                 * @brief send my move to opponents
+                                 * 
+                                 */
                                 _connection.sendMSG(msg_move);
                             }
                         }
@@ -195,13 +227,17 @@ private:
             }
         }
     private:
-        bool _active;
-        bool _check_win;
-        bool _notify_server;
+        bool _active; // window activity
+        bool _check_win; // win flag
+        bool _notify_server; // for correct notify
         Connect& _connection;
-        Rendzy rendzy;
+        Rendzy rendzy; // board
     };
 
+    /**
+     * @brief listens to the server
+     * 
+     */
     void _listen()
     {
         while (_connect.getState() == Connect::STATE::GOOD)

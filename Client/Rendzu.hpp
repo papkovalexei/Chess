@@ -15,6 +15,13 @@ public:
     Rendzy() 
    {}
 
+    /**
+     * @brief Records the opponent's move in the game matrix.
+     * Gives access to the player's next move (changing the _player flag)
+     * 
+     * @param i 
+     * @param j 
+     */
     void move(int i, int j)
     {
         _circle_rect_position[i][j].setFillColor(_player ? Color::Black : Color::White);
@@ -22,6 +29,11 @@ public:
         _player = !_player;
     }
 
+    /**
+     * @brief Initializes all texture positions, as well as variables responsible for the game
+     * 
+     * @param choose  player color
+     */
     void start(bool choose)
     {
         _image_board.loadFromFile("board.png");
@@ -55,11 +67,22 @@ public:
         _win = false;
     }
 
+    /**
+     * @brief Get the _win object
+     * 
+     * @return true - game over
+     * @return false - the game continues
+     */
     bool getState()
     {
         return _win;
     }
 
+    /**
+     * @brief Checks for a collision between the cursor and the stone. If there is a collision, then it draws a texture
+     * 
+     * @param mouse 
+     */
     void checkCollision(Vector2f mouse)
     {
         for (int i = 0; i < 15; i++)
@@ -75,7 +98,12 @@ public:
             }
     }
 
-    int checkWin()
+    /**
+     * @brief checks the position for a win
+     * 
+     * @return bool - who won
+     */
+    bool checkWin()
     {
         bool mbWinner = !_player;
         cout << mbWinner << endl;
@@ -221,11 +249,20 @@ public:
         return -1;
     }
 
+    /**
+     * @brief Pressing the LMB
+     * 
+     */
     void lockSelect()
     {
         _lock_select = 1;
     }
 
+    /**
+     * @brief Unpressed the LMB
+     * 
+     * @return std::pair<int, int> - position (i, j)
+     */
     std::pair<int, int> unlockSelect()
     {
         auto temp = _select_rect;
@@ -234,6 +271,11 @@ public:
         return temp;
     }
 
+    /**
+     * @brief Drawing the game
+     * 
+     * @param window 
+     */
     void draw(RenderWindow& window)
     {
         window.draw(_sprite_board);
@@ -243,6 +285,10 @@ public:
                 window.draw(_circle_rect_position[i][j]);
     }
 private:
+    /**
+     * @brief drawing a stone after a move, changing the move flag, entering a position in the matrix
+     * 
+     */
     void _playerMove()
     {
         if (_select_rect.first != -1 && _board_position[_select_rect.first][_select_rect.second] == -1)
@@ -258,13 +304,13 @@ private:
     Texture _texture_board;
     Sprite _sprite_board;
 
-    int _board_position[15][15];
-    bool _player;
-    bool _me;
-    bool _win;
-    pair<int, int> _select_rect;
-    int _lock_select;
-    CircleShape _circle_rect_position[15][15];
+    int _board_position[15][15]; // game position
+    bool _player; // now player
+    bool _me; // my color
+    bool _win; // the game continues?
+    pair<int, int> _select_rect; // now the LMB position
+    int _lock_select; // for mouse
+    CircleShape _circle_rect_position[15][15]; // stone position and color
 };
 
 #endif

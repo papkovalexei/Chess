@@ -36,6 +36,11 @@ public:
         send(_socket, msg.c_str(), sizeof(msg.c_str()), 0);
     }
 
+    /**
+     * @brief Reads data from the socket input stream, and returns a string
+     * 
+     * @return std::string 
+     */
     std::string getMSG()
     {
         char buffer[1024];
@@ -48,12 +53,18 @@ public:
         return buffer;
     }
 
+    /**
+     * @brief Connects a socket to the server. If it fails, the _state variable will have the corresponding flag
+     * 
+     * @param port ex. 2020
+     * @param address ex. 192.168.1.1
+     */
     void connectServ(int port, const std::string& address)
     {
         _socket = socket(AF_INET, SOCK_STREAM, 0);
 
         _addr.sin_family = AF_INET;
-        _addr.sin_port = htons(1900);
+        _addr.sin_port = htons(port);
         inet_pton(AF_INET, address.c_str(), &(_addr.sin_addr));
 
         if (connect(_socket, (sockaddr *)&_addr, sizeof(_addr)) < 0)
