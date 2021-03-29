@@ -65,7 +65,6 @@ private:
     WSAData _w_data;
 #else
     int _socket;
-    sockaddr_in _addr;
 #endif
 };
 
