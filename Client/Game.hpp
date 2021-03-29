@@ -21,7 +21,7 @@ using namespace sf;
 class Game
 {
 public:
-    Game();
+    Game(const std::string& address, const int& port);
 
     /**
      * @brief starts a thread listening to the server

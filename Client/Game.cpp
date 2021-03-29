@@ -2,8 +2,8 @@
 
 #include "Game.hpp"
 
-Game::Game() 
-    : _connect{1900, "192.168.0.124"}, _flag_game(false), _game(_connect)
+Game::Game(const std::string& address, const int& port) 
+    : _connect{port, address}, _flag_game(false), _game(_connect)
 {
     help();
     start();
