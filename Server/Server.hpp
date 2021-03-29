@@ -27,7 +27,7 @@
 #include <regex>
 #include <iostream>
 #include <mutex>
-
+#include <vector>
 #include "Game.hpp"
 
 typedef int SOCK;
