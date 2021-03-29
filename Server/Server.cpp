@@ -150,10 +150,17 @@ void Server::_listenAccept()
         sockaddr_in cs_addr;
 #endif
         socklen_t cs_addrsize = sizeof (cs_addr);
-
+#ifdef _WIN32
         SOCKET sock = accept(_socket, (sockaddr*)&cs_addr, &cs_addrsize);
+
         if (sock == SOCKET_ERROR)
             continue;
+#else
+        SOCK sock = accept(_socket, (sockaddr*)&cs_addr, &cs_addrsize);
+
+        if (sock <= 0)
+            continue;
+#endif
 
         enableKeepalive(sock);
         std::cout << "Accept: " << inet_ntoa(cs_addr.sin_addr) << "(" << sock << ")" << std::endl;
