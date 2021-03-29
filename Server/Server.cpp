@@ -291,7 +291,6 @@ void Server::Client::_move(const std::string& mv)
         enemy = game.first;
     if (game.second != _socket && game.second != -1)
         enemy = game.second;
-    std::cout << mv << std::endl;
     send(enemy, mv.c_str(), mv.size(), 0);
 }
 
@@ -344,7 +343,7 @@ void Server::Client::_listen()
             _show();
         else if (msg == "create" && _game_uid == -1)
             _create();
-        else if (msg == "exit_lob")
+        else if (msg == "exit_lobby")
             _clearGame();
         else if (std::regex_match(msg, std::regex("join [0-9]*")))
             _join(std::atoi(msg.substr(4, msg.length() - 4).c_str()));

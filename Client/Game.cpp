@@ -1,7 +1,9 @@
+#pragma warning(disable : 4996)
+
 #include "Game.hpp"
 
 Game::Game() 
-    : _connect{1900, "192.168.0.206"}, _flag_game(false), _game(_connect)
+    : _connect{1900, "192.168.0.124"}, _flag_game(false), _game(_connect)
 {
     help();
     start();

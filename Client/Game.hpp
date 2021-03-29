@@ -1,6 +1,11 @@
 #ifndef H_GAME
 #define H_GAME
 
+#ifdef _WIN32
+#pragma warning(disable : 4996)
+#pragma comment(lib, "ws2_32.lib")
+#endif
+
 #include <iostream>
 #include <cstring>
 #include <mutex>

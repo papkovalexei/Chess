@@ -1,6 +1,11 @@
 #ifndef H_RENDZU
 #define H_RENDZU
 
+#ifdef _WIN32
+#pragma warning(disable : 4996)
+#pragma comment(lib, "ws2_32.lib")
+#endif
+
 #include <SFML/Graphics.hpp>
 #include <iostream>
 

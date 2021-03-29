@@ -1,14 +1,25 @@
 #ifndef H_CONNECT
 #define H_CONNECT
 
-#include <iostream>
+#ifdef _WIN32
+#pragma warning(disable : 4996)
+#pragma comment(lib, "ws2_32.lib")
+
+#include <Winsock2.h>
+#include <WS2tcpip.h>
+
+#else
+
 #include <sys/types.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <vector>
-#include <arpa/inet.h>
 #include <unistd.h>
+
+#endif
+
 #include <iostream>
+#include <vector>
 #include <thread>
 
 class Connect
@@ -48,8 +59,14 @@ public:
 
 private:
     STATE _state;
+    sockaddr_in _addr;
+#ifdef _WIN32
+    SOCKET _socket;
+    WSAData _w_data;
+#else
     int _socket;
     sockaddr_in _addr;
+#endif
 };
 
 #endif
