@@ -1,6 +1,9 @@
+
+#ifdef _WIN32
 #pragma warning(disable : 4996)
 #pragma comment(lib, "ws2_32.lib")
-
+#include <string.h>
+#endif
 
 #include "Server.hpp"
 
@@ -85,6 +88,7 @@ void Server::stop()
     shutdown(_socket, 2);
 #ifdef _WIN32
     closesocket(_socket);
+    WSACleanup();
 #else
     close(_socket);
 #endif
@@ -287,7 +291,8 @@ void Server::Client::_move(const std::string& mv)
         enemy = game.first;
     if (game.second != _socket && game.second != -1)
         enemy = game.second;
-    send(enemy, mv.c_str(), sizeof(mv.c_str()), 0);
+    std::cout << mv << std::endl;
+    send(enemy, mv.c_str(), mv.size(), 0);
 }
 
 void Server::Client::_clearGame()
@@ -327,10 +332,10 @@ void Server::Client::_listen()
 
     do
     {
-        char buffer[256];
+        std::vector<char> buffer(256);
 
-        result = recv(_socket, buffer, sizeof(buffer), 0);
-        std::string msg = std::string(buffer);
+        result = recv(_socket, buffer.data(), buffer.size(), 0);
+        std::string msg = buffer.data();
 
         if (msg == "")
             continue;
@@ -348,7 +353,7 @@ void Server::Client::_listen()
         else if (msg == "end")
             _endGame();
 
-        std::cout << _socket << ": " << buffer << std::endl;
+        std::cout << _socket << ": " << buffer.data() << std::endl;
     } while (result > 0);
     _clearGame();
 
