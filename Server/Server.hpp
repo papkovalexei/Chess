@@ -1,19 +1,30 @@
 #ifndef H_SERVER
 #define H_SERVER
 
+#ifdef _WIN32
+
+#include <WinSock2.h>
+#include <winsock.h>
+#include <WS2tcpip.h>
+
+#else
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netinet/tcp.h>
+#include <sys/signal.h>
+#include <unistd.h>
+
+#endif
+
 #include <vector>
 #include <thread>
-#include <arpa/inet.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/signal.h>
 #include <map>
 #include <regex>
-#include <netinet/tcp.h>
 #include <iostream>
 #include <mutex>
 
@@ -85,14 +96,22 @@ public:
      * 
      * @param socket 
      */
+#ifdef _WIN32
+    void deleteClient(SOCKET socket);
+#else
     void deleteClient(SOCK socket);
+#endif
 
     /**
      * @brief Causes an auto win message to be sent when the opponent is disabled
      * 
      * @param socket winner
      */
+#ifdef _WIN32
+    void autoWin(SOCKET socket);
+#else
     void autoWin(SOCK socket);
+#endif
 
     /**
      * @brief Get the State object
@@ -106,8 +125,11 @@ private:
      * 
      * @param sock 
      */
+#ifdef _WIN32
+    void enableKeepalive(SOCKET socket);
+#else
     void enableKeepalive(SOCK socket);
-
+#endif
     /**
      * @brief Listens to the server socket and processes new connections. Adds them to map _clients
      * 
@@ -122,7 +144,11 @@ private:
          * 
          * @param socket client
          */
+#ifdef _WIN32
+        Client(SOCKET socket);
+#else
         Client(SOCK socket);
+#endif
 
         /**
          * @brief Destroy the Client object. Closes the client socket and waits for the message processing flow to stop
@@ -187,19 +213,28 @@ private:
          */
         void _listen();
 
-        std::thread _handle_message;
+#ifdef _WIN32
+        SOCKET _socket;
+#else
         SOCK _socket;
+#endif
+        std::thread _handle_message;
         std::recursive_mutex _mutex_game;
         int _game_uid;
     };
 
     static Server* _server;
-
+#ifdef _WIN32
+    SOCKET _socket;
+    WSAData _w_data;
+    SOCKADDR_IN _address;
+    std::map<SOCKET, Client*> _clients;
+#else
     sockaddr_in _address;
     SOCK _socket;
-
-    STATE _state;
     std::map<SOCK, Client*> _clients;
+#endif
+    STATE _state;
     std::recursive_mutex _mutex_clients;
     std::thread _handle_accept;
 };

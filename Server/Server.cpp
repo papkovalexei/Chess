@@ -1,3 +1,7 @@
+#pragma warning(disable : 4996)
+#pragma comment(lib, "ws2_32.lib")
+
+
 #include "Server.hpp"
 
 Server::Server() 
@@ -22,24 +26,14 @@ Server* Server::getInstance()
 void Server::init(const std::string& address, const int& port)
 {
     std::cout << "Init server on: " << address << "::" << port << std::endl;
-    
     _address.sin_family = AF_INET;
     _address.sin_port = htons(port);
+#ifdef _WIN32
+    WSAStartup(MAKEWORD(2, 2), &_w_data);
+    _address.sin_addr.S_un.S_addr = inet_addr(address.c_str());
+#else
     inet_pton(AF_INET, address.c_str(), &(_address.sin_addr));
-}
-
-void Server::showUser()
-{
-    for (auto& client : _clients)
-        std::cout << "Socket: " << client.first << std::endl;
-}
-
-void Server::showGame()
-{
-    auto games = Game::getInstance()->getAllGames();
-
-    for (auto& game : games)
-        std::cout << "UID: " <<  game.first << ": (" << game.second.first << ", " << game.second.second << ")" << std::endl;
+#endif
 }
 
 int Server::start()
@@ -49,7 +43,11 @@ int Server::start()
     int err_bind;
 
     std::cout << "Socket init: ";
+#ifdef _WIN32
+    if (static_cast<int>(_socket) == SOCKET_ERROR)
+#else
     if (_socket < 0)
+#endif
     {
         std::cout << "Bad (" << _socket << ")" << std::endl;
         _state = ERROR_SOCKET_INIT;
@@ -60,7 +58,11 @@ int Server::start()
     err_bind = bind(_socket, (sockaddr*)&_address, sizeof(_address));
 
     std::cout << "Socket bind: ";
+#ifdef _WIN32
+    if (err_bind == SOCKET_ERROR)
+#else
     if (err_bind < 0)
+#endif
     {
         std::cout << "Bad (" << err_bind << ")" << std::endl;
         _state = ERROR_SOCKET_BIND;
@@ -81,7 +83,11 @@ void Server::stop()
     _state = CLOSE;
 
     shutdown(_socket, 2);
+#ifdef _WIN32
+    closesocket(_socket);
+#else
     close(_socket);
+#endif
 
     if (_handle_accept.joinable())
         _handle_accept.join();
@@ -93,7 +99,11 @@ void Server::stop()
     }
 }
 
+#ifdef _WIN32
+void Server::deleteClient(SOCKET socket)
+#else
 void Server::deleteClient(SOCK socket)
+#endif
 {
     _mutex_clients.lock();
     std::cout << "delete client " << socket << std::endl;
@@ -103,7 +113,11 @@ void Server::deleteClient(SOCK socket)
     _mutex_clients.unlock();
 }
 
+#ifdef _WIN32
+void Server::autoWin(SOCKET socket)
+#else
 void Server::autoWin(SOCK socket)
+#endif
 {
     _mutex_clients.lock();
 
@@ -112,10 +126,70 @@ void Server::autoWin(SOCK socket)
     _mutex_clients.unlock();
 }
 
-Server::STATE Server::getState() const 
+#ifdef _WIN32
+Server::Client::Client(SOCKET socket)
+#else
+Server::Client::Client(SOCK socket)
+#endif
+    : _socket(socket), _game_uid(-1)
 {
-    return _state;
+    _handle_message = std::thread([this]{_listen();});
 }
+
+void Server::_listenAccept()
+{
+    while (_state == WORK)
+    {
+#ifdef _WIN32
+        SOCKADDR_IN cs_addr;
+#else
+        sockaddr_in cs_addr;
+#endif
+        socklen_t cs_addrsize = sizeof (cs_addr);
+
+        SOCKET sock = accept(_socket, (sockaddr*)&cs_addr, &cs_addrsize);
+        if (sock == SOCKET_ERROR)
+            continue;
+
+        enableKeepalive(sock);
+        std::cout << "Accept: " << inet_ntoa(cs_addr.sin_addr) << "(" << sock << ")" << std::endl;
+
+        _mutex_clients.lock();
+        _clients[sock] = new Client(sock);
+        _mutex_clients.unlock();
+    }
+}
+
+Server::Client::~Client()
+{
+    std::cout << "Close: " << _socket << std::endl;
+    shutdown(_socket, 2);
+#ifdef _WIN32
+    closesocket(_socket);
+#else
+    close(_socket);
+#endif
+
+    join();
+}
+
+#ifdef _WIN32
+
+void Server::enableKeepalive(SOCKET socket)
+{
+    BOOL yes = 1;
+    setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, (char *)&yes, sizeof(int));
+    BOOL idle = 1;
+    setsockopt(socket, IPPROTO_TCP, TCP_KEEPIDLE, (char *)&idle, sizeof(int));
+
+    int interval = 1;
+    setsockopt(socket, IPPROTO_TCP, TCP_KEEPINTVL, (char *)&interval, sizeof(int));
+
+    int maxpkt = 10;
+    setsockopt(socket, IPPROTO_TCP, TCP_KEEPCNT, (char *)&maxpkt, sizeof(int));
+}
+
+#else
 
 void Server::enableKeepalive(SOCK socket)
 {
@@ -131,39 +205,26 @@ void Server::enableKeepalive(SOCK socket)
     setsockopt(socket, IPPROTO_TCP, TCP_KEEPCNT, &maxpkt, sizeof(int));
 }
 
-void Server::_listenAccept()
+#endif
+
+void Server::showUser()
 {
-    while (_state == WORK)
-    {
-        sockaddr_in cs_addr;
-        socklen_t cs_addrsize = sizeof (cs_addr);
-
-        SOCK sock = accept(_socket, (sockaddr*)&cs_addr, &cs_addrsize);
-        if (sock <= 0)
-            continue;
-
-        enableKeepalive(sock);
-        std::cout << "Accept: " << inet_ntoa(cs_addr.sin_addr) << "(" << sock << ")" << std::endl;
-
-        _mutex_clients.lock();
-        _clients[sock] = new Client(sock);
-        _mutex_clients.unlock();
-    }
+    for (auto& client : _clients)
+        std::cout << "Socket: " << client.first << std::endl;
 }
 
-Server::Client::Client(SOCK socket)
-    : _socket(socket), _game_uid(-1)
+void Server::showGame()
 {
-    _handle_message = std::thread([this]{_listen();});
+    auto games = Game::getInstance()->getAllGames();
+
+    for (auto& game : games)
+        std::cout << "UID: " <<  game.first << ": (" << game.second.first << ", " << game.second.second << ")" << std::endl;
 }
 
-Server::Client::~Client()
-{
-    std::cout << "Close: " << _socket << std::endl;
-    shutdown(_socket, 2);
-    close(_socket);
 
-    join();
+Server::STATE Server::getState() const 
+{
+    return _state;
 }
 
 void Server::Client::join()
