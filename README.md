@@ -1,3 +1,13 @@
-# 連珠 (Rendju) Papkov Alexei #
+# 連珠 (Rendju) Papkov Alexei 
 Renju is a Japanese board game similar to Tic-tac-toe  
-![Example](https://www.google.com/url?sa=i&url=https%3A%2F%2Fskyruk.livejournal.com%2F341667.html&psig=AOvVaw2zUKmDgFkeoVZKNGDN2W7_&ust=1617132937524000&source=images&cd=vfe&ved=0CAIQjRxqFwoTCOiI0-Of1u8CFQAAAAAdAAAAABAK)
+  
+<img src=https://i.ibb.co/xDYSWB8/rendz.jpg alt="drawing" width=250>
+  
+The essence of the game is to collect five stones in a row (diagonal) of the same color. There are two players and they take turns on the 15x15 board
+
++ Make for Windows:  
+>Need install SFML: https://www.sfml-dev.org/download.php
++ Make for Linux:
+>Need install SFML (ex. sudo Pacman -S sfml)
+>>Compile server: g++ *.hpp *.cpp -o Server -lpthread
+>>Compile client: g++ *.hpp *.cpp -o Client -lpthread -lsfml-window -lsfml-system -lsfml-graphics
