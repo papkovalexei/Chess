@@ -5,10 +5,13 @@ Renju is a Japanese board game similar to Tic-tac-toe
   
 The essence of the game is to collect five stones in a row (diagonal) of the same color. There are two players and they take turns on the 15x15 board
 
++ Documentation: 
+> https://docs.google.com/document/d/148NPTW9B2-N8NJfb9oUTxJnZF62ZsAlPQpfN8g_IeJg/edit?usp=sharing
+
 + Make for Windows:  
 >Need install SFML: https://www.sfml-dev.org/download.php  
 >>Compile with g++/gcc/MSVC
 + Make for Linux:
 >Need install SFML (ex. sudo Pacman -S sfml)
 >>Compile server: g++ *.hpp *.cpp -o Server -lpthread  
->>Compile client: g++ *.hpp *.cpp -o Client -lpthread -lsfml-window -lsfml-system -lsfml-graphics
+>>Compile client: g++ *.hpp *.cpp -o Client -lpthread -lsfml-window -lsfml-system -lsfml-graphics    
